@@ -35,7 +35,9 @@ class event(Base):
     lat = Column(Integer,index=True)
     lon = Column(Integer,index=True)
     height = Column(Integer,index=True)
-    def __init__(self, name, start, end, lat, lon, height):
+    matrixs = relationship("matrix")
+    def __init__(self,id_in, name, start, end, lat, lon, height):
+        self.id = id_in
         self.name = name
         self.start = int(start)
         self.end = int(end)
@@ -48,7 +50,8 @@ class matrix(Base):
     id = Column(Integer,primary_key=True,index=True,autoincrement=True)
     event = Column(Integer,ForeignKey("event.id"))
     lines = relationship("line")
-    def __init__(self,event:int):
+    def __init__(self,id_in:int,event:int):
+        self.id = id_in
         self.event = event
 
 class line(Base):
@@ -72,8 +75,8 @@ class line(Base):
     data_14 = Column(Integer)
     data_15 = Column(Integer)
     data_16 = Column(Integer)
-    def __init__(self, matrix,list_line):
-        #self.id = id
+    def __init__(self,id_in, matrix,list_line):
+        self.id = id_in
         self.matrix = matrix
         self.data_1 = list_line[0]
         self.data_2 = list_line[1]
@@ -128,8 +131,8 @@ class hv_line(Base):
     hv30 = Column(Integer, index=True)
     hv31 = Column(Integer, index=True)
     hv32 = Column(Integer, index=True)
-    def __init__(self,list_in):
-        #self.id = id
+    def __init__(self,id_in,list_in):
+        self.id = id_in
         self.hv1 = list_in[0]
         self.hv2 = list_in[1]
         self.hv3 = list_in[2]

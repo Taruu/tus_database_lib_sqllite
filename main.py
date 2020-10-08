@@ -22,8 +22,8 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-database = "/home/taruu/PycharmProjects/tus_database_lib/database_work.db"
-txt_path = "/home/taruu/PycharmProjects/tus_database_lib/test_txt"
+database = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/database_work.db"
+txt_path = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/test_txt"
 
 class File_work:
     def __init__(self,database_path:str):
@@ -101,10 +101,13 @@ class File_work:
             frames_x16.append(frame)
 
         return {"frames_x16": frames_x16, "lsit_hv": list_hv, "LLA_coordinates": LLA_coordinates,
-                "start": startdatatime, "end": enddatatime,"filename":r_filename}
+                "start": startdatatime, "end": enddatatime,"filename":r_filename,"hash"}
 
     def insert_data(self, data_dict:dict):
+
         #TODO СВОЙ СЧЕТЧИК ТАК КАК ТАК БЫСТРЕЕ
+
+        input()
         event_item = datadriver.event(data_dict["filename"],
                          data_dict["start"],
                          data_dict["end"],
@@ -131,12 +134,56 @@ class File_work:
 
         self.data_event.session.commit()
 
+    def data_to_database_insert_list(self,list_in_data):
+        print(f"Import in databese {len(list_in_data)} items")
+        obj_last_event = self.data_event.session.query(datadriver.event).order_by(datadriver.event.id.desc()).first()
+        if obj_last_event:
+            last_event_id = obj_last_event.id
+            last_matrix_id = obj_last_event.matrixs[-1].id
+            last_line_id = obj_last_event.matrixs[-1].lines[-1].id
+        else:
+            last_event_id = 0
+            last_matrix_id = 0
+            last_line_id = 0
+        sql_all_add = []
+        #print(last_event_id,last_matrix_id,last_line_id)
+        for id,data_dict in enumerate(list_in_data):
+            last_event_id += 1
+            event_item = datadriver.event(last_event_id,data_dict["filename"],
+                                          data_dict["start"],
+                                          data_dict["end"],
+                                          *data_dict["LLA_coordinates"])
+
+            sql_all_add.append(event_item)
+            for matrix in data_dict["frames_x16"]:
+                last_matrix_id += 1
+                matrix_item = datadriver.matrix(last_matrix_id,event_item.id)
+                sql_all_add.append(matrix_item)
+
+                for line in matrix:
+                    last_line_id += 1
+                    sql_all_add.append(datadriver.line(last_line_id,matrix_item.id, line))
+                    #print(last_event_id, last_matrix_id, last_line_id)
+        else:
+            self.data_event.session.add_all(sql_all_add)
+            self.data_event.session.commit()
+
+
+
+
+
+
+
+
+
+
     def take_convert(self, filename):
         if filename.split(".")[-1] == "xz":
             data_all = self.load_file_xz(file)
         else:
             data_all = self.load_file_txt(file)
-        return self.insert_data(data_all)
+
+        return data_all
 
 
 
@@ -151,6 +198,16 @@ if len(list_xz) != 0:
 
 File_worker = File_work(database)
 
+list_to_add = []
 for id,file in enumerate(list_files):
-    print(id,file)
-    File_worker.take_convert(file)
+    print(id+1,file)
+    if len(list_to_add) > 10:
+        File_worker.data_to_database_insert_list(list_to_add)
+        list_to_add.clear()
+    else:
+        obj = File_worker.take_convert(file)
+        if obj:
+            list_to_add.append(obj)
+else:
+    if list_to_add:
+        File_worker.data_to_database_insert_list(list_to_add)
