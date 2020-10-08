@@ -29,6 +29,7 @@ Base = declarative_base()
 class event(Base):
     __tablename__ = 'event'
     id = Column(Integer, primary_key=True, index=True,autoincrement=True)
+    hash = Column(String,unique=True)
     name = Column(String,unique=True)
     start = Column(BIGINT,index=True)
     end = Column(BIGINT)
@@ -36,8 +37,9 @@ class event(Base):
     lon = Column(Integer,index=True)
     height = Column(Integer,index=True)
     matrixs = relationship("matrix")
-    def __init__(self,id_in, name, start, end, lat, lon, height):
+    def __init__(self,id_in,hash, name, start, end, lat, lon, height):
         self.id = id_in
+        self.hash = hash
         self.name = name
         self.start = int(start)
         self.end = int(end)

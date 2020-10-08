@@ -2,6 +2,7 @@
 #txt_path = input("ВВЕДИТЕ путь к папке с файлами txt/xz: ")
 
 import csv
+import hashlib
 import  datadriver
 from datadriver import DataEvents
 from itertools import islice
@@ -39,6 +40,7 @@ class File_work:
         frames_x16 = []  # массив по 16*16 *256
         lines = []
         with lzma.open(filename, "rt") as inp:
+            hash_str = hashlib.sha224(inp).hexdigest()
             for line in list(islice(inp, 2560)):
                 l = [x for x in (' '.join(line.split())).split(' ')]
                 lines.append(l)
@@ -65,7 +67,8 @@ class File_work:
         return {"frames_x16": frames_x16, "lsit_hv": list_hv, "LLA_coordinates": LLA_coordinates,
                 "start": startdatatime,
                 "end": enddatatime,
-                "filename": r_filename}
+                "filename": r_filename,
+                "hash":hash_str}
 
     def load_file_txt(self,filename):
         "load from txt file"
@@ -77,6 +80,8 @@ class File_work:
         frames_x16 = []  # массив по 16*16 *256
         lines = []
         with open(filename) as inp:
+            hash_str = hashlib.sha224(inp)
+            print(hash_str)
             for line in list(islice(inp, 2560)):
                 l = [x for x in (' '.join(line.split())).split(' ')]
                 lines.append(l)
@@ -101,7 +106,7 @@ class File_work:
             frames_x16.append(frame)
 
         return {"frames_x16": frames_x16, "lsit_hv": list_hv, "LLA_coordinates": LLA_coordinates,
-                "start": startdatatime, "end": enddatatime,"filename":r_filename,"hash"}
+                "start": startdatatime, "end": enddatatime,"filename":r_filename,"hash":hash_str}
 
     def insert_data(self, data_dict:dict):
 
@@ -149,7 +154,9 @@ class File_work:
         #print(last_event_id,last_matrix_id,last_line_id)
         for id,data_dict in enumerate(list_in_data):
             last_event_id += 1
-            event_item = datadriver.event(last_event_id,data_dict["filename"],
+            event_item = datadriver.event(last_event_id,
+                                          data_dict["hash"],
+                                          data_dict["filename"],
                                           data_dict["start"],
                                           data_dict["end"],
                                           *data_dict["LLA_coordinates"])
