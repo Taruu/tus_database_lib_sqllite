@@ -171,7 +171,7 @@ class hv_line(Base):
 
 class DataEvents:
     def __init__(self,database):
-        engine = create_engine('sqlite:///' + database, echo=False)
+        engine = create_engine('sqlite:///' + database, fast_executemany=True,echo=False)
         Session = sessionmaker(bind=engine)
         self.session = Session()
 

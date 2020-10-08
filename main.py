@@ -40,7 +40,7 @@ class File_work:
         frames_x16 = []  # массив по 16*16 *256
         lines = []
         with lzma.open(filename, "rt") as inp:
-            hash_str = hashlib.sha224(inp).hexdigest()
+            hash_str = hashlib.md5(inp.read().decode())
             for line in list(islice(inp, 2560)):
                 l = [x for x in (' '.join(line.split())).split(' ')]
                 lines.append(l)
@@ -80,21 +80,26 @@ class File_work:
         frames_x16 = []  # массив по 16*16 *256
         lines = []
         with open(filename) as inp:
-            hash_str = hashlib.sha224(inp)
-            print(hash_str)
+            hash_str = hashlib.md5(str.encode(inp.read(), encoding='utf-8')).hexdigest()
+            inp.seek(0)
             for line in list(islice(inp, 2560)):
                 l = [x for x in (' '.join(line.split())).split(' ')]
                 lines.append(l)
-
-        with open(filename) as inp:
+            inp.seek(0)
             list_hv = next(islice(inp, 256, 257)).split()
             list_hv.pop(0)
             list_hv.pop(0)
 
-        with open(filename) as inp:
+            inp.seek(0)
             LLA_coordinates = next(islice(inp, 268, 269)).split()
             LLA_coordinates.pop(0)
             LLA_coordinates.pop(0)
+
+       # with open(filename) as inp:
+
+
+        #with open(filename) as inp:
+
 
         for j in range(2, 258):
             frame = []
@@ -173,6 +178,7 @@ class File_work:
                     #print(last_event_id, last_matrix_id, last_line_id)
         else:
             self.data_event.session.add_all(sql_all_add)
+            self.data_event.session.flush()
             self.data_event.session.commit()
 
 
@@ -189,8 +195,12 @@ class File_work:
             data_all = self.load_file_xz(file)
         else:
             data_all = self.load_file_txt(file)
-
-        return data_all
+        hash_file = data_all["hash"]
+        obj = self.data_event.session.query(datadriver.event).filter_by(hash = hash_file).first()
+        if not obj:
+            return data_all
+        else:
+            return None
 
 
 
@@ -208,7 +218,7 @@ File_worker = File_work(database)
 list_to_add = []
 for id,file in enumerate(list_files):
     print(id+1,file)
-    if len(list_to_add) > 10:
+    if len(list_to_add) >= 100:
         File_worker.data_to_database_insert_list(list_to_add)
         list_to_add.clear()
     else:
