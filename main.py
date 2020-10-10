@@ -1,7 +1,8 @@
 #database = input("Введите путь к базе данных: ")
 #txt_path = input("ВВЕДИТЕ путь к папке с файлами txt/xz: ")
-
+import sys
 import csv
+import array
 import hashlib
 import  datadriver
 from datadriver import DataEvents
@@ -23,8 +24,10 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
+
 database = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/database_work.db"
-txt_path = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/test_txt"
+txt_path = "/home/taruu/the data science/txt/met_AURORA"
 
 class File_work:
     def __init__(self,database_path:str):
@@ -145,16 +148,17 @@ class File_work:
         self.data_event.session.commit()
 
     def data_to_database_insert_list(self,list_in_data):
+        start = time.time()
         print(f"Import in databese {len(list_in_data)} items")
         obj_last_event = self.data_event.session.query(datadriver.event).order_by(datadriver.event.id.desc()).first()
         if obj_last_event:
             last_event_id = obj_last_event.id
             last_matrix_id = obj_last_event.matrixs[-1].id
-            last_line_id = obj_last_event.matrixs[-1].lines[-1].id
+            #last_line_id = obj_last_event.matrixs[-1].lines[-1].id
         else:
             last_event_id = 0
             last_matrix_id = 0
-            last_line_id = 0
+            #last_line_id = 0
         sql_all_add = []
         #print(last_event_id,last_matrix_id,last_line_id)
         for id,data_dict in enumerate(list_in_data):
@@ -165,21 +169,30 @@ class File_work:
                                           data_dict["start"],
                                           data_dict["end"],
                                           *data_dict["LLA_coordinates"])
+            hv_line = datadriver.hv_line(last_event_id,data_dict["lsit_hv"])
 
             sql_all_add.append(event_item)
+            sql_all_add.append(hv_line)
+            # print(array.array("h",np.array(data_dict["frames_x16"]).flat))
+            # print("arrays", sys.getsizeof())
+            # print("text",sys.getsizeof(str(data_dict["frames_x16"])))
+            # print("matrix", sys.getsizeof(pickle.dumps(data_dict["frames_x16"])))
+            # print("turpule", sys.getsizeof(pickle.dumps(tuple(data_dict["frames_x16"]))))
+            # print("torch", sys.getsizeof(pickle.dumps(torch.Tensor(data_dict["frames_x16"]))))
             for matrix in data_dict["frames_x16"]:
                 last_matrix_id += 1
-                matrix_item = datadriver.matrix(last_matrix_id,event_item.id)
+                matrix_item = datadriver.matrix(last_matrix_id,event_item.id,array.array("h",np.array(matrix).flat).tobytes())
                 sql_all_add.append(matrix_item)
 
-                for line in matrix:
-                    last_line_id += 1
-                    sql_all_add.append(datadriver.line(last_line_id,matrix_item.id, line))
-                    #print(last_event_id, last_matrix_id, last_line_id)
+                # for line in matrix:
+                #     last_line_id += 1
+                #     sql_all_add.append(datadriver.line(last_line_id,matrix_item.id, line))
+                #     #print(last_event_id, last_matrix_id, last_line_id)
         else:
             self.data_event.session.add_all(sql_all_add)
             self.data_event.session.flush()
             self.data_event.session.commit()
+        print(f"Data add {time.time() - start}")
 
 
 

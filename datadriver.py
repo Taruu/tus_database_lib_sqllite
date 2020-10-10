@@ -3,13 +3,13 @@ from itertools import islice
 import numpy as np
 import sqlalchemy
 import glob
-from sqlalchemy import Column, Integer, String,BIGINT
+from sqlalchemy import Column, Integer, String,BIGINT,BLOB
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 import pickle
 from datetime import datetime
 import lzma
@@ -51,56 +51,59 @@ class matrix(Base):
     __tablename__ = 'matrix'
     id = Column(Integer,primary_key=True,index=True,autoincrement=True)
     event = Column(Integer,ForeignKey("event.id"))
-    lines = relationship("line")
-    def __init__(self,id_in:int,event:int):
+    data = Column(BLOB)
+    def __init__(self,id_in:int,event:int,data:bytes):
         self.id = id_in
         self.event = event
+        self.data = data
 
-class line(Base):
-    __tablename__ = 'line'
-    id = Column(Integer,autoincrement=True, primary_key=True, index=True)
-    #TODO связь
-    matrix = Column(Integer,ForeignKey('matrix.id'))
-    data_1 = Column(Integer)
-    data_2 = Column(Integer)
-    data_3 = Column(Integer)
-    data_4 = Column(Integer)
-    data_5 = Column(Integer)
-    data_6 = Column(Integer)
-    data_7 = Column(Integer)
-    data_8 = Column(Integer)
-    data_9 = Column(Integer)
-    data_10 = Column(Integer)
-    data_11 = Column(Integer)
-    data_12 = Column(Integer)
-    data_13 = Column(Integer)
-    data_14 = Column(Integer)
-    data_15 = Column(Integer)
-    data_16 = Column(Integer)
-    def __init__(self,id_in, matrix,list_line):
-        self.id = id_in
-        self.matrix = matrix
-        self.data_1 = list_line[0]
-        self.data_2 = list_line[1]
-        self.data_3 = list_line[2]
-        self.data_4 = list_line[3]
-        self.data_5 = list_line[4]
-        self.data_6 = list_line[5]
-        self.data_7 = list_line[6]
-        self.data_8 = list_line[7]
-        self.data_9 = list_line[8]
-        self.data_10= list_line[9]
-        self.data_11= list_line[10]
-        self.data_12= list_line[11]
-        self.data_13= list_line[12]
-        self.data_14= list_line[13]
-        self.data_15= list_line[14]
-        self.data_16= list_line[15]
+
+
+# class line(Base):
+#     __tablename__ = 'line'
+#     id = Column(Integer,autoincrement=True, primary_key=True, index=True)
+#     #TODO связь
+#     matrix = Column(Integer,ForeignKey('matrix.id'))
+#     data_1 = Column(Integer)
+#     data_2 = Column(Integer)
+#     data_3 = Column(Integer)
+#     data_4 = Column(Integer)
+#     data_5 = Column(Integer)
+#     data_6 = Column(Integer)
+#     data_7 = Column(Integer)
+#     data_8 = Column(Integer)
+#     data_9 = Column(Integer)
+#     data_10 = Column(Integer)
+#     data_11 = Column(Integer)
+#     data_12 = Column(Integer)
+#     data_13 = Column(Integer)
+#     data_14 = Column(Integer)
+#     data_15 = Column(Integer)
+#     data_16 = Column(Integer)
+#     def __init__(self,id_in, matrix,list_line):
+#         self.id = id_in
+#         self.matrix = matrix
+#         self.data_1 = list_line[0]
+#         self.data_2 = list_line[1]
+#         self.data_3 = list_line[2]
+#         self.data_4 = list_line[3]
+#         self.data_5 = list_line[4]
+#         self.data_6 = list_line[5]
+#         self.data_7 = list_line[6]
+#         self.data_8 = list_line[7]
+#         self.data_9 = list_line[8]
+#         self.data_10= list_line[9]
+#         self.data_11= list_line[10]
+#         self.data_12= list_line[11]
+#         self.data_13= list_line[12]
+#         self.data_14= list_line[13]
+#         self.data_15= list_line[14]
+#         self.data_16= list_line[15]
 
 class hv_line(Base):
     __tablename__ = 'hv_line'
-    id = Column(Integer, primary_key=True, index=True,autoincrement=True)
-    event = Column(Integer,ForeignKey("event.id"))
+    id = Column(Integer, ForeignKey("event.id"),primary_key=True, index=True,autoincrement=True)
+    #event = Column(Integer,ForeignKey("event.id"))
     hv1 = Column(Integer, index=True)
     hv2 = Column(Integer, index=True)
     hv3 = Column(Integer, index=True)
@@ -171,7 +174,12 @@ class hv_line(Base):
 
 class DataEvents:
     def __init__(self,database):
-        engine = create_engine('sqlite:///' + database, fast_executemany=True,echo=False)
+        engine = create_engine('sqlite:///' + database,echo=False)
+        #DBSession = scoped_session(sessionmaker())
+        # DBSession.configure(bind=engine, autoflush=False, expire_on_commit=False)
+        # Base.metadata.drop_all(engine)
+        # Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
+
         self.session = Session()
 
