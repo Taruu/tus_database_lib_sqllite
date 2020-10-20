@@ -27,7 +27,7 @@ import torch.optim as optim
 
 
 database = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/database_work.db"
-txt_path = "/home/taruu/the data science/txt/met_AURORA"
+txt_path = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/test_txt"
 
 class File_work:
     def __init__(self,database_path:str):

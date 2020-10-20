@@ -31,5 +31,9 @@ for i in range(1,data_event.session.query(datadriver.event).count()):
     for matrix in obj.matrixs:
         data = array.array('h',[])
         data.frombytes(matrix.data)
+        print(obj.name)
         print(data)
+        np_matrix = np.array(data.tolist()).reshape(16,16)
+        print(np_matrix)
+        input()
 print(time.time()-start)

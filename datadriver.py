@@ -183,3 +183,9 @@ class DataEvents:
 
         self.session = Session()
 
+
+
+    def insert_data_to_database(self,folder_txt_or_xz,result_database):
+        count_all = 0
+
+        pass
