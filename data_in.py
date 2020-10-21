@@ -205,9 +205,9 @@ class File_work:
 
     def take_convert(self, filename):
         if filename.split(".")[-1] == "xz":
-            data_all = self.load_file_xz(file)
+            data_all = self.load_file_xz(filename)
         else:
-            data_all = self.load_file_txt(file)
+            data_all = self.load_file_txt(filename)
         hash_file = data_all["hash"]
         obj = self.data_event.session.query(datadriver.event).filter_by(hash = hash_file).first()
         if not obj:

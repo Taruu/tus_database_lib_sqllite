@@ -28,14 +28,6 @@ database = "/home/taruu/PycharmProjects/tus_database_lib_sqllite/database_work.d
 data_event = DataEvents(database)
 print(data_event.session.query(datadriver.event).count() )
 start = time.time()
-for i in range(1,data_event.session.query(datadriver.event).count()):
-    obj = data_event.session.query(datadriver.event).get(i)
-    for matrix in obj.matrixs:
-        data = array.array('h',[])
-        data.frombytes(matrix.data)
-        print(obj.name)
-        print(data)
-        np_matrix = np.array(data.tolist()).reshape(16,16)
-        print(np_matrix)
-        input()
+for item in data_event.all_data():
+    print(item.matrixs_x256)
 print(time.time()-start)
